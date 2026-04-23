@@ -1,7 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
 import { ProfileService, AppError } from '../services/profile.service';
+import { QueryService } from '../services/query.service';
 
 const profileService = new ProfileService();
+const queryService = new QueryService();
 
 export class ProfileController {
   async createProfile(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -65,20 +67,53 @@ export class ProfileController {
 
   async getProfiles(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { gender, country_id, age_group } = req.query;
+      const validation = queryService.validateQueryParams(req.query);
+      if (!validation.valid) {
+        res.status(400).json({ status: 'error', message: validation.message });
+        return;
+      }
 
-      const filters: any = {};
-      if (typeof gender === 'string') filters.gender = gender;
-      if (typeof country_id === 'string') filters.country_id = country_id;
-      if (typeof age_group === 'string') filters.age_group = age_group;
+      const options = {
+        gender: req.query.gender as string,
+        age_group: req.query.age_group as string,
+        country_id: req.query.country_id as string,
+        min_age: req.query.min_age ? Number(req.query.min_age) : undefined,
+        max_age: req.query.max_age ? Number(req.query.max_age) : undefined,
+        min_gender_probability: req.query.min_gender_probability ? Number(req.query.min_gender_probability) : undefined,
+        min_country_probability: req.query.min_country_probability ? Number(req.query.min_country_probability) : undefined,
+        sort_by: req.query.sort_by as string,
+        order: req.query.order as string,
+        page: req.query.page ? Number(req.query.page) : undefined,
+        limit: req.query.limit ? Number(req.query.limit) : undefined,
+      };
 
-      const profiles = await profileService.getProfiles(filters);
+      const result = await queryService.getProfiles(options);
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
 
-      res.status(200).json({
-        status: 'success',
-        count: profiles.length,
-        data: profiles,
-      });
+  async searchProfiles(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { q, page, limit } = req.query;
+
+      if (!q || typeof q !== 'string') {
+        res.status(400).json({ status: 'error', message: 'Missing search query' });
+        return;
+      }
+
+      const pageNum = page ? Number(page) : 1;
+      const limitNum = limit ? Number(limit) : 10;
+
+      const result = await queryService.searchProfiles(q, pageNum, limitNum);
+      
+      if (result.status === 'error') {
+        res.status(400).json(result);
+        return;
+      }
+
+      res.status(200).json(result);
     } catch (error) {
       next(error);
     }

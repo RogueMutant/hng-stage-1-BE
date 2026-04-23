@@ -5,6 +5,7 @@ import {
   generateId,
   getTopCountry,
   normalizeName,
+  getCountryName,
 } from "../utils";
 
 export class AppError extends Error {
@@ -79,12 +80,12 @@ export class ProfileService {
       name,
       gender: genderData.gender,
       gender_probability: genderData.probability,
-      sample_size: genderData.count,
       age,
       age_group: ageGroup,
       country_id: topCountry.country_id,
+      country_name: getCountryName(topCountry.country_id),
       country_probability: topCountry.probability,
-      created_at: new Date(), // Prisma handles to Date object
+      created_at: new Date(),
     };
 
     const newProfile = await this.repository.create(newProfileData);
@@ -99,23 +100,12 @@ export class ProfileService {
     return this.repository.findById(id);
   }
 
-  async getProfiles(filters: {
-    gender?: string;
-    country_id?: string;
-    age_group?: string;
+  async getProfiles(options: {
+    filters: any;
+    sort: any;
+    pagination: any;
   }) {
-    // case insensitive formatting
-    const formattedFilters = {
-      gender: filters.gender ? filters.gender.toLowerCase() : undefined,
-      country_id: filters.country_id
-        ? filters.country_id.toUpperCase()
-        : undefined,
-      age_group: filters.age_group
-        ? filters.age_group.toLowerCase()
-        : undefined,
-    };
-
-    return this.repository.findAll(formattedFilters);
+    return this.repository.findAll(options);
   }
 
   async deleteProfile(id: string) {

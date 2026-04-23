@@ -18,6 +18,7 @@ const profileController = new ProfileController();
 
 // Routes
 app.post('/api/profiles', profileController.createProfile.bind(profileController));
+app.get('/api/profiles/search', profileController.searchProfiles.bind(profileController));
 app.get('/api/profiles/:id', profileController.getProfileById.bind(profileController));
 app.get('/api/profiles', profileController.getProfiles.bind(profileController));
 app.delete('/api/profiles/:id', profileController.deleteProfile.bind(profileController));

@@ -4,11 +4,35 @@ export function generateId(): string {
   return uuidv7();
 }
 
+export const countryMap: Record<string, string> = {
+  'NG': 'Nigeria',
+  'KE': 'Kenya',
+  'AO': 'Angola',
+  'US': 'United States',
+  'GB': 'United Kingdom',
+  'FR': 'France',
+  'DE': 'Germany',
+  'IN': 'India',
+  'CN': 'China',
+  'JP': 'Japan',
+  'BR': 'Brazil',
+  'ZA': 'South Africa',
+  'GH': 'Ghana',
+  'EG': 'Egypt',
+  'CA': 'Canada',
+  'AU': 'Australia'
+};
+
+export function getCountryName(code: string): string {
+  return countryMap[code.toUpperCase()] || 'Unknown';
+}
+
 export function classifyAge(age: number): string {
   if (age >= 0 && age <= 12) return 'child';
   if (age >= 13 && age <= 19) return 'teenager';
   if (age >= 20 && age <= 59) return 'adult';
-  return 'senior';
+  if (age >= 60) return 'senior';
+  return 'unknown';
 }
 
 export function getTopCountry(countries: Array<{ country_id: string; probability: number }>): { country_id: string; probability: number } | null {

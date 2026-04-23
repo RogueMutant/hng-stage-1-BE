@@ -7,18 +7,20 @@ datasource db {
 }
 
 model Profile {
-  id                  String   @id
+  id                  String   @id @default(uuid())
   name                String   @unique
   gender              String
   gender_probability  Float
-  sample_size         Int
   age                 Int
   age_group           String
   country_id          String
+  country_name        String
   country_probability Float
   created_at          DateTime @default(now())
 
   @@index([gender])
-  @@index([country_id])
   @@index([age_group])
+  @@index([country_id])
+  @@index([age])
+  @@index([created_at])
 }

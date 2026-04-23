@@ -25,22 +25,60 @@ export class ProfileRepository {
     });
   }
 
-  async findAll(filters: { gender?: string; country_id?: string; age_group?: string }) {
+  async findAll(options: {
+    filters: {
+      gender?: string;
+      age_group?: string;
+      country_id?: string;
+      min_age?: number;
+      max_age?: number;
+      min_gender_probability?: number;
+      min_country_probability?: number;
+    };
+    sort?: {
+      by: 'age' | 'created_at' | 'gender_probability';
+      order: 'asc' | 'desc';
+    };
+    pagination: {
+      page: number;
+      limit: number;
+    };
+  }) {
+    const { filters, sort, pagination } = options;
     const where: Prisma.ProfileWhereInput = {};
 
-    if (filters.gender) {
-      where.gender = { equals: filters.gender };
-    }
-    if (filters.country_id) {
-      where.country_id = { equals: filters.country_id };
-    }
-    if (filters.age_group) {
-      where.age_group = { equals: filters.age_group };
+    if (filters.gender) where.gender = { equals: filters.gender };
+    if (filters.age_group) where.age_group = { equals: filters.age_group };
+    if (filters.country_id) where.country_id = { equals: filters.country_id };
+    
+    if (filters.min_age !== undefined || filters.max_age !== undefined) {
+      where.age = {};
+      if (filters.min_age !== undefined) where.age.gte = filters.min_age;
+      if (filters.max_age !== undefined) where.age.lte = filters.max_age;
     }
 
-    return prisma.profile.findMany({
-      where,
-    });
+    if (filters.min_gender_probability !== undefined) {
+      where.gender_probability = { gte: filters.min_gender_probability };
+    }
+
+    if (filters.min_country_probability !== undefined) {
+      where.country_probability = { gte: filters.min_country_probability };
+    }
+
+    const skip = (pagination.page - 1) * pagination.limit;
+    const take = pagination.limit;
+
+    const [data, total] = await Promise.all([
+      prisma.profile.findMany({
+        where,
+        orderBy: sort ? { [sort.by]: sort.order } : undefined,
+        skip,
+        take,
+      }),
+      prisma.profile.count({ where }),
+    ]);
+
+    return { data, total };
   }
 
   async deleteById(id: string) {
